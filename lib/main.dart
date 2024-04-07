@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
 
 class NearbyRestaurantsPage extends StatefulWidget {
   @override
@@ -16,6 +18,8 @@ class _NearbyRestaurantsPageState extends State<NearbyRestaurantsPage> {
 
   List<dynamic> restaurants = [];
   String keyword = '피자';
+
+  late WebViewController controller;
 
   @override
   void initState() {
@@ -40,6 +44,7 @@ class _NearbyRestaurantsPageState extends State<NearbyRestaurantsPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
         setState(() {
           restaurants = data['documents'];
         });
@@ -80,17 +85,20 @@ class _NearbyRestaurantsPageState extends State<NearbyRestaurantsPage> {
         title: Text('Nearby Restaurants'),
       ),
       body: restaurants.isEmpty
-          ? Center(
+          ? const Center(
         child: CircularProgressIndicator(),
-      )
+          )
           : ListView.builder(
-        itemCount: restaurants.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(restaurants[index]['place_name']),
-          );
-        },
-      ),
+              itemCount: restaurants.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(restaurants[index]['place_name']),
+                  onTap: () {
+
+                  },
+                );
+              },
+          ),
     );
   }
 }
