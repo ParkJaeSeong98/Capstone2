@@ -19,8 +19,6 @@ class _NearbyRestaurantsPageState extends State<NearbyRestaurantsPage> {
   List<dynamic> restaurants = [];
   String keyword = '피자';
 
-  late WebViewController controller;
-
   @override
   void initState() {
     super.initState();
@@ -94,7 +92,12 @@ class _NearbyRestaurantsPageState extends State<NearbyRestaurantsPage> {
                 return ListTile(
                   title: Text(restaurants[index]['place_name']),
                   onTap: () {
-
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WebViewPage(url: restaurants[index]['place_url']),
+                      ),
+                    );
                   },
                 );
               },
@@ -107,4 +110,44 @@ void main() {
   runApp(MaterialApp(
     home: NearbyRestaurantsPage(),
   ));
+}
+
+
+
+
+
+class WebViewPage extends StatefulWidget {
+  final String url;
+  const WebViewPage({required this.url});
+
+  @override
+  State<WebViewPage> createState() => _WebViewPageState();
+}
+
+class _WebViewPageState extends State<WebViewPage> {
+
+  WebViewController? webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    // 입력받은 URL에서 http를 https로 변경
+    String modifiedUrl = widget.url.replaceAll('http://', 'https://');
+
+    // WebView 초기화
+    webViewController = WebViewController()
+      ..loadRequest(Uri.parse(modifiedUrl))
+      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('WebView'),
+      ),
+      body: WebViewWidget(controller: webViewController!),
+    );
+  }
 }
