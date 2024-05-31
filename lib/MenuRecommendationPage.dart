@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'HealthModePage.dart';
 // for kakaomap API
@@ -5,6 +6,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:kakao_map_plugin/kakao_map_plugin.dart';
 
 class MenuRecommendationPage extends StatefulWidget {
   final String mealTime;
@@ -23,9 +25,14 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
   final int radius = 3000; // 3km 반경 내에서 검색
   List<dynamic> restaurants = [];
 
+  Position? position;
+  //Set<Marker> markers = {};
+  late KakaoMapController mapController;
+
   @override
   void initState() {
     super.initState();
+    AuthRepository.initialize(appKey: 'ef3b44bb326c11d6d6e504f3253729ee');  // 지도 띄우기 위한 API KEY
     // _getNearbyRestaurants();
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   _showModalBottomSheet();
@@ -36,9 +43,19 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
   // 비동기 메서드 이름 변경 및 호출 방법 수정
   Future<void> _initRestaurants() async {
     //restaurants = [];
-    Position position = await getCurrentLocation();
-    await _getNearbyRestaurants(position); // await을 사용하여 데이터 로드 완료까지 기다림
-    _showModalBottomSheet(); // 데이터 로드 후에 showModalBottomSheet() 호출
+    position = await getCurrentLocation();
+    await _getNearbyRestaurants(position!); // await을 사용하여 데이터 로드 완료까지 기다림
+
+    // for (int i = 0; i < restaurants.length; i++) {
+    //   markers.add(
+    //     Marker(
+    //       markerId: i.toString(),
+    //       latLng: LatLng(double.parse(restaurants[i]['x']), double.parse(restaurants[i]['y']))
+    //     ),
+    //   );
+    // }
+    print(restaurants);
+    //_showModalBottomSheet(); // 데이터 로드 후에 showModalBottomSheet() 호출
   }
 
 
@@ -99,20 +116,31 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                 ),
               ),
             ),
-            Container(
-              margin: EdgeInsets.only(top: 20, bottom: 20),
-              width: 350,
-              height: 250,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Image.asset(
-                'assets/images/${widget.menu}.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(child: Text('이미지를 찾을 수 없습니다'));
-                },
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    //builder: (context) => Static2MarkerScreen(title: "피자",),
+                    builder: (context) => NewPage(restaurants: restaurants, position: position!), // 새로운 페이지 위젯을 여기에 제공
+                  ),
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.only(top: 20, bottom: 20),
+                width: 350,
+                height: 250,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Image.asset(
+                  'assets/images/${widget.menu}.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(child: Text('이미지를 찾을 수 없습니다'));
+                  },
+                ),
               ),
             ),
           ],
@@ -134,54 +162,63 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
     }
   }
 
-  void _showModalBottomSheet() {
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          minChildSize: 0.3,
-          maxChildSize: 0.9,
-          initialChildSize: 0.5,
-          builder: (BuildContext context, ScrollController scrollController) {
-            return Container(
-              padding: EdgeInsets.all(20),
-              child: restaurants.isEmpty
-                  ? const Center(
-                      child: Text("No Results"),
-                  )
-                  :
-                  ListView.builder(
-                    controller: scrollController,
-                    itemCount: restaurants.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return ListTile(
-                        title: Text(restaurants[index]['place_name']),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => WebViewPage(url: restaurants[index]['place_url']),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // void _showModalBottomSheet() {
+  //   showModalBottomSheet(
+  //     isScrollControlled: true,
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return DraggableScrollableSheet(
+  //         expand: false,
+  //         minChildSize: 0.3,
+  //         maxChildSize: 0.9,
+  //         initialChildSize: 0.5,
+  //         builder: (BuildContext context, ScrollController scrollController) {
+  //           return Container(
+  //             padding: EdgeInsets.all(20),
+  //             child: restaurants.isEmpty
+  //                 ? const Center(
+  //                     child: Text("No Results"),
+  //                 )
+  //                 :
+  //                 // ListView.builder(
+  //                 //   controller: scrollController,
+  //                 //   itemCount: restaurants.length,
+  //                 //   itemBuilder: (BuildContext context, int index) {
+  //                 //     return ListTile(
+  //                 //       title: Text(restaurants[index]['place_name']),
+  //                 //       onTap: () {
+  //                 //         Navigator.push(
+  //                 //           context,
+  //                 //           MaterialPageRoute(
+  //                 //             builder: (context) => WebViewPage(url: restaurants[index]['place_url']),
+  //                 //           ),
+  //                 //         );
+  //                 //       },
+  //                 //     );
+  //                 //   },
+  //                 // ),
+  //                 // KakaoMap(
+  //                 //   onMapCreated: ((controller) async {
+  //                 //     mapController = controller;
+  //                 //     setState(() { });
+  //                 //   }),
+  //                 //   markers: markers.toList(),
+  //                 //   center: LatLng(position!.latitude, position!.longitude),
+  //                 // ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
-  Future<void> _getNearbyRestaurants(Position position) async {  // 주변 식당 리스트
+  Future<void> _getNearbyRestaurants(Position? position) async {  // 주변 식당 리스트
 
     //Position position = await getCurrentLocation();
-    double latitude = position.latitude;
-    double longitude = position.longitude;
-    String keyword = widget.menu;
+    double latitude = position!.latitude;
+    double longitude = position!.longitude;
+    //String keyword = widget.menu;
+    String keyword = "피자";
 
     try {
       final url = Uri.parse(
@@ -247,6 +284,7 @@ class _WebViewPageState extends State<WebViewPage> {
   @override
   void initState() {
     super.initState();
+    webViewController!.clearCache();
     // 입력받은 URL에서 http를 https로 변경
     String modifiedUrl = widget.url.replaceAll('http://', 'https://');
 
@@ -264,6 +302,130 @@ class _WebViewPageState extends State<WebViewPage> {
         title: Text('WebView'),
       ),
       body: WebViewWidget(controller: webViewController!),
+    );
+  }
+}
+
+
+
+
+class NewPage extends StatefulWidget {
+
+  final Position position;
+  final List<dynamic> restaurants;
+
+  NewPage({
+    Key? key,
+    required this.restaurants,
+    required this.position,
+  }) : super(key: key);
+
+  @override
+  State<NewPage> createState() => _NewPageState();
+}
+
+class _NewPageState extends State<NewPage> {
+  late KakaoMapController mapController;
+  Set<Marker> markers = {};
+
+  @override
+  Widget build(BuildContext context) {
+
+    print(markers);
+    print("HELLO");
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('지도'),
+      ),
+      body: Center(
+        child:
+        KakaoMap(
+          onMapCreated: ((controller) async {
+            mapController = controller;
+
+            // 식당들
+            for (int i = 0; i < widget.restaurants.length; i++) {
+              markers.add(
+                Marker(
+                    markerId: i.toString(),
+                    latLng: LatLng(double.parse(widget.restaurants[i]['y']), double.parse(widget.restaurants[i]['x'])),
+
+                    //infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
+                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
+                    infoWindowRemovable: true,
+                    //infoWindowFirstShow: false,
+                ),
+              );
+            }
+            // 현재위치
+            markers.add(
+                Marker(
+                    markerId: 'markerId',
+                    latLng: LatLng(widget.position.latitude, widget.position.longitude),
+                    width: 30,
+                    height: 40,
+                    offsetX: 15,
+                    offsetY: 44,
+                    markerImageSrc: 'https://w7.pngwing.com/pngs/398/162/png-transparent-computer-icons-google-map-maker-map-marker-angle-black-map-thumbnail.png',
+                    infoWindowContent: '<div style="padding:15px;">현재 위치</div>',
+                    infoWindowRemovable: true,
+                    infoWindowFirstShow: true,
+                )
+            );
+            setState(() { });
+          }),
+          markers: markers.toList(),
+          center: LatLng(widget.position.latitude, widget.position.longitude),
+          //currentLevel: 6, // 얼마나 확대할지
+          onMarkerTap: ((markerId, latLng, zoomLevel) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('식당정보를 누르면 확인가능합니다.')));
+          }),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+/// 이미지 지도에 마커 표시하기
+/// https://apis.map.kakao.com/web/sample/staticMapWithMarker/
+class Static2MarkerScreen extends StatefulWidget {
+  const Static2MarkerScreen({Key? key, this.title}) : super(key: key);
+
+  final String? title;
+
+  @override
+  State<Static2MarkerScreen> createState() => _Static2MarkerScreenState();
+}
+
+class _Static2MarkerScreenState extends State<Static2MarkerScreen> {
+  late KakaoMapController mapController;
+
+  LatLng center = LatLng(33.450701, 126.570667);
+  Set<Marker> markers = {};
+
+  @override
+  void initState() {
+    markers.add(Marker(markerId: 'markerId', latLng: center));
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("피자"),
+      ),
+      body: KakaoStaticMap(
+        markers: markers.toList(),
+        center: center,
+        currentLevel: 6,
+      ),
     );
   }
 }
