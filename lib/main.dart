@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:widget_spinning_wheel/widget_spinning_wheel.dart';
+import 'custom_spinning_wheel.dart';
 import 'MenuRecommendationPage.dart';
 import 'HealthModePage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 
-// main color: 57BD85
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -38,8 +38,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(
-      const Duration(seconds: 3),
-          () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen())),
+      const Duration(seconds: 2),
+          () => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      ),
     );
   }
 
@@ -60,10 +63,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isHealthMode = false; // Track the state of the Health Mode
+  List<String> _foodItems = [];
 
-  Future<List<String>> _getFoodItems() async {
+  Future<void> _fetchFoodItems() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('foods').get();
-    return snapshot.docs.map((doc) => doc['name'] as String).toList();
+    setState(() {
+      _foodItems = snapshot.docs.map((doc) => doc['name'] as String).toList();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFoodItems();
   }
 
   void toggleHealthMode() {
@@ -82,6 +94,52 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  void _spinRoulette() {
+    if (_foodItems.isEmpty) return;
+    final random = Random();
+    final randomIndex = random.nextInt(_foodItems.length);
+    final selectedItem = _foodItems[randomIndex];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('오늘 점심은 이거다!'),
+          titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 30.0),
+          content: Text(
+            '$selectedItem',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          actions: [
+            Container(
+              margin: EdgeInsets.only(bottom: 10.0, right: 10.0),
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Color(0xFF57BD85),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // First, close the dialog
+                  Navigator.push( // Then, navigate to the next page.
+                    context,
+                    MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: "lunch", menu: selectedItem)),
+                  );
+                },
+                child: Text('확인'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -111,62 +169,12 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 50),
-            FutureBuilder<List<String>>(
-              future: _getFoodItems(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return WidgetSpinningWheel(
-                    labels: snapshot.data!, // 수정: 가져온 음식 이름 데이터를 labels에 전달
-                    onSpinComplete: (String label) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('오늘 점심은 이거다!'),
-                            titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 30.0),
-                            content: Text(
-                              '$label',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                            actions: [
-                              Container(
-                                margin: EdgeInsets.only(bottom: 10.0, right: 10.0),
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: Color(0xFF57BD85),
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop(); // First, close the dialog
-                                    Navigator.push( // Then, navigate to the next page.
-                                      context,
-                                      MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: "lunch", menu: label)),
-                                    );
-                                  },
-                                  child: Text('확인'),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    size: 300,
-                    colours: [Colors.red, Colors.green, Colors.blue, Colors.yellow, Colors.purple], // Optional color customization
-                    defaultSpeed: 0.3, // Optional speed adjustment
-                  );
-                } else {
-                  // 추가: 데이터 로딩 중일 때 CircularProgressIndicator 표시
-                  return CircularProgressIndicator();
-                }
-              },
+            _foodItems.isEmpty
+                ? CircularProgressIndicator()
+                : CustomSpinningWheel(
+              size: 300,
+              onSpinComplete: _spinRoulette,
+              spinSpeed: 0.2,
             ),
             SizedBox(height: 50),
           ],
@@ -175,4 +183,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

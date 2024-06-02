@@ -75,6 +75,7 @@ flutter:
     - assets/images/carbohydrates.png
     - assets/images/protein.png
     - assets/images/fats.png
+    - assets/roulette.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
