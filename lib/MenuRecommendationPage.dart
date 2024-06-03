@@ -128,7 +128,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Image.asset(
-                  'assets/images/${widget.menu}.png',
+                  'assets/foods/${widget.menu}.png',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Center(child: Text('이미지를 찾을 수 없습니다'));
