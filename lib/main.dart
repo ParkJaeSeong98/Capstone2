@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'custom_spinning_wheel.dart';
 import 'MenuRecommendationPage.dart';
@@ -78,13 +79,46 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchFoodItems();
   }
 
-  void toggleHealthMode() {
+  Future<void> _toggleHealthMode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String carbohydratesLevel = prefs.getString('carbohydratesLevel') ?? '';
+    String proteinLevel = prefs.getString('proteinLevel') ?? '';
+    String fatsLevel = prefs.getString('fatsLevel') ?? '';
+    List<String> savedNutrients = prefs.getStringList('addedNutrients') ?? [];
+
+    bool hasUserPreferences = carbohydratesLevel.isNotEmpty || proteinLevel.isNotEmpty || fatsLevel.isNotEmpty || savedNutrients.isNotEmpty;
+
+    if (hasUserPreferences) {
+      setState(() {
+        _isHealthMode = !_isHealthMode; // Toggle the health mode state
+      });
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HealthModePage(),
+          settings: RouteSettings(arguments: _isHealthMode),
+        ),
+      ).then((returnedMode) {
+        if (returnedMode != null) {
+          setState(() {
+            _isHealthMode = returnedMode as bool;
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _editHealthMode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
     bool newHealthMode = !_isHealthMode;  // Calculate the new mode state before navigation
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => HealthModePage(),
-        settings: RouteSettings(arguments: newHealthMode),  // Pass the new state to HealthModePage
+        settings: RouteSettings(arguments: newHealthMode),
       ),
     ).then((returnedMode) {
       // Use the returnedMode to update the state if it is not null
@@ -99,8 +133,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _spinRoulette() {
     if (_foodItems.isEmpty) return;
     final random = Random();
-    final randomIndex = random.nextInt(_foodItems.length);
-    final selectedItem = _foodItems[randomIndex];
+    final randomIndex = random.nextInt(_foodItems.length); // 랜덤 인덱스 생성
+    final selectedItem = _foodItems[randomIndex]; //
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -150,13 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Image.asset(_isHealthMode ? 'assets/images/on_button.png' : 'assets/images/off_button.png'),
-            onPressed: toggleHealthMode,
+            onPressed: _toggleHealthMode,
           ),
           IconButton(
             icon: Icon(Icons.account_circle),
-            onPressed: () {
-              // Optionally, navigate to a different page depending on additional conditions
-            },
+            onPressed: _editHealthMode,
           ),
         ],
       ),

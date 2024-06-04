@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class HealthModePage extends StatefulWidget {
   @override
@@ -6,6 +8,32 @@ class HealthModePage extends StatefulWidget {
 }
 
 class _HealthModePageState extends State<HealthModePage> {
+  Future<void> loadUserPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String carbohydratesLevel = prefs.getString('carbohydratesLevel') ?? '';
+    String proteinLevel = prefs.getString('proteinLevel') ?? '';
+    String fatsLevel = prefs.getString('fatsLevel') ?? '';
+
+    List<String> savedNutrients = prefs.getStringList('addedNutrients') ?? [];
+
+    setState(() {
+      selectedLevels['Carbohydrates'] = carbohydratesLevel;
+      selectedLevels['Protein'] = proteinLevel;
+      selectedLevels['Fats'] = fatsLevel;
+      addedNutrients.addAll(savedNutrients);
+    });
+  }
+
+  Future<void> saveUserPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('carbohydratesLevel', selectedLevels['Carbohydrates'] ?? '');
+    await prefs.setString('proteinLevel', selectedLevels['Protein'] ?? '');
+    await prefs.setString('fatsLevel', selectedLevels['Fats'] ?? '');
+
+    await prefs.setStringList('addedNutrients', addedNutrients);
+  }
 
   final Map<String, String> nutrientImages = {
     'Carbohydrates': 'assets/images/carbohydrates.png',
@@ -23,33 +51,67 @@ class _HealthModePageState extends State<HealthModePage> {
   final List<String> addedNutrients = [];
   final TextEditingController searchController = TextEditingController();
 
+  // 기타 영양소 목록
+  final List<String> nutrients = [
+    '비타민A', '비타민B', '비타민C', '비타민D', '칼슘', '철분', '아연', '마그네슘',
+    // 여기에 기타 영양소 목록 추가
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserPreferences();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Health Mode"),
-        actions: [
-          IconButton(
-            icon: Image.asset('assets/images/on_button.png'),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {},
-          ),
-        ],
+        automaticallyImplyLeading: false, // 화살표 숨기기
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 10.0),
-        children: [
-          buildRichTextHeader(),
-          buildNutrientSelection(),
-          buildSearchAddNutrient(),
-          buildNutrientBasket(),
-        ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildRichTextHeader(),
+              buildNutrientSelection(),
+              buildSearchAddNutrient(),
+              buildNutrientBasket(),
+              SizedBox(height: 150), // 여유 공간 추가
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white, // 원하는 배경색으로 설정
+        child: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 5),
+              ),
+              onPressed: () async {
+                await saveUserPreferences();
+                Navigator.pop(context);
+              },
+              child: Text(
+                '저장',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+
 
   Padding buildRichTextHeader() {
     return Padding(
@@ -96,6 +158,7 @@ class _HealthModePageState extends State<HealthModePage> {
               setState(() {
                 selectedLevels[entry.key] = level;
               });
+              saveUserPreferences(); // 추가
             },
             child: Container(
               width: 32,
@@ -119,22 +182,33 @@ class _HealthModePageState extends State<HealthModePage> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              labelText: "Search Nutrients",
-              suffixIcon: IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () {
-                  setState(() {
-                    if (searchController.text.isNotEmpty) {
-                      addedNutrients.add(searchController.text);
-                      searchController.clear();
-                    }
-                  });
-                },
+          child: TypeAheadField<String>(
+            textFieldConfiguration: TextFieldConfiguration(
+              controller: searchController,
+              decoration: InputDecoration(
+                labelText: "Search Nutrients",
               ),
             ),
+            suggestionsCallback: (pattern) {
+              return nutrients.where((nutrient) => nutrient.toLowerCase().contains(pattern.toLowerCase()));
+            },
+            itemBuilder: (context, suggestion) {
+              return ListTile(
+                title: Text(suggestion),
+              );
+            },
+            onSuggestionSelected: (suggestion) {
+              setState(() {
+                addedNutrients.add(suggestion);
+                searchController.clear();
+              });
+              saveUserPreferences(); // 추가
+            },
+            transitionBuilder: (context, suggestionsBox, controller) {
+              return suggestionsBox;
+            },
+            hideOnLoading: false,
+            keepSuggestionsOnLoading: true,
           ),
         ),
       ],
