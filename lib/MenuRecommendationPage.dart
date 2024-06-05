@@ -153,14 +153,28 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                   ),
                 ],
               ), // 로딩 인디케이터
-            ) : RichText(
-              textAlign: TextAlign.center,
-              text: const TextSpan(
-                style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
-                children: <TextSpan>[
-                  TextSpan(text: '음식 사진을 클릭하세요!'),
-                ]
+            ) : Container(
+              child: restaurants.isEmpty ?
+              RichText(
+                textAlign: TextAlign.center,
+                text: const TextSpan(
+                  style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                  children: <TextSpan>[
+                    TextSpan(text: '주변에 식당이 없어요!'),
+                  ]
+                ),
+              )
+                  :
+              RichText(
+                textAlign: TextAlign.center,
+                text: const TextSpan(
+                    style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(text: '음식 사진을 클릭하세요!'),
+                    ]
+                ),
               ),
+
             ),
           ],
         ),
