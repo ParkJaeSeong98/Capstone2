@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'nutrients_list.dart';
 
 class HealthModePage extends StatefulWidget {
   @override
@@ -50,12 +51,6 @@ class _HealthModePageState extends State<HealthModePage> {
   final List<String> intakeLevels = ['조금', '보통', '많이'];
   final List<String> addedNutrients = [];
   final TextEditingController searchController = TextEditingController();
-
-  // 기타 영양소 목록
-  final List<String> nutrients = [
-    '비타민A', '비타민B', '비타민C', '비타민D', '칼슘', '철분', '아연', '마그네슘',
-    // 여기에 기타 영양소 목록 추가
-  ];
 
   @override
   void initState() {
