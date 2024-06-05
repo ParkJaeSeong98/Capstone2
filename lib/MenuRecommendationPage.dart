@@ -246,19 +246,20 @@ class WebViewPage extends StatefulWidget {
 
 class _WebViewPageState extends State<WebViewPage> {
 
-  WebViewController? webViewController;
+  late WebViewController webViewController;
 
   @override
   void initState() {
     super.initState();
-    webViewController!.clearCache();
-    // 입력받은 URL에서 http를 https로 변경
-    String modifiedUrl = widget.url.replaceAll('http://', 'https://');
 
+    String modifiedUrl = widget.url.replaceAll('http://', 'https://');
     // WebView 초기화
     webViewController = WebViewController()
       ..loadRequest(Uri.parse(modifiedUrl))
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    webViewController.clearCache();
+    // 입력받은 URL에서 http를 https로 변경
   }
 
   @override
@@ -267,7 +268,7 @@ class _WebViewPageState extends State<WebViewPage> {
       appBar: AppBar(
         title: Text('WebView'),
       ),
-      body: WebViewWidget(controller: webViewController!),
+      body: WebViewWidget(controller: webViewController),
     );
   }
 }
@@ -300,6 +301,16 @@ class _NewPageState extends State<NewPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('지도'),
+          actions: [
+              IconButton(
+                icon: Icon(Icons.map),
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => NewPage(restaurants: widget.restaurants, position: widget.position)),
+                  );
+                },
+            ),],
       ),
       body: Center(
         child:
@@ -315,7 +326,7 @@ class _NewPageState extends State<NewPage> {
                     latLng: LatLng(double.parse(widget.restaurants[i]['y']), double.parse(widget.restaurants[i]['x'])),
 
                     //infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
-                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
+                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_self">식당 정보</a></div>',
                     infoWindowRemovable: true,
                     //infoWindowFirstShow: false,
                 ),
