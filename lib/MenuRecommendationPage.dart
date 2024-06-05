@@ -86,9 +86,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
           ),
         ],
       ),
-      body: _isLoading ? Center(
-        child: CircularProgressIndicator(), // 로딩 인디케이터
-      ) : Center(
+      body: Center(
         child: Column(
           children: [
             Padding(
@@ -134,6 +132,32 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                     return Center(child: Text('이미지를 찾을 수 없습니다'));
                   },
                 ),
+              ),
+            ),
+            SizedBox(height: 40),
+            _isLoading ?  Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
+                        style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        children: <TextSpan>[
+                          TextSpan(text: '식당을 불러오고 있어요!'),
+                        ]
+                    ),
+                  ),
+                ],
+              ), // 로딩 인디케이터
+            ) : RichText(
+              textAlign: TextAlign.center,
+              text: const TextSpan(
+                style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                children: <TextSpan>[
+                  TextSpan(text: '음식 사진을 클릭하세요!'),
+                ]
               ),
             ),
           ],
@@ -318,8 +342,8 @@ class _NewPageState extends State<NewPage> {
           center: LatLng(widget.position.latitude, widget.position.longitude),
           currentLevel: 6, // 얼마나 확대할지
           onMarkerTap: ((markerId, latLng, zoomLevel) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('식당정보를 누르면 확인가능합니다.')));
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(content: Text('식당정보를 클릭하세요!')));
           }),
         ),
       ),
