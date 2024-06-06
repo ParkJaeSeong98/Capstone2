@@ -113,10 +113,14 @@ class _HomeScreenState extends State<HomeScreen> {
     DateTime now = DateTime.now();
     int hour = now.hour;
 
-    if (hour >= 6 && hour < 11) {
+    if (hour >= 6 && hour < 10) {
       return '아침';
-    } else if (hour >= 11 && hour < 16) {
+    } else if (hour >= 10 && hour < 11) {
+      return '아점';
+    } else if (hour >= 11 && hour < 14) {
       return '점심';
+    } else if (hour >= 14 && hour < 16) {
+      return '이른 저녁';
     } else if (hour >= 16 && hour < 21) {
       return '저녁';
     } else {
@@ -386,12 +390,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('지금 시각은 $currentTime',
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),),
-            SizedBox(height: 8),
-            SizedBox(height: 50),
             Text('오늘 $mealTimeText은 이거다!',
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),),
+              style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),),
             SizedBox(height: 50),
             _foodItems.isEmpty
                 ? CircularProgressIndicator()
