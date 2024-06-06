@@ -226,41 +226,74 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                 padding: EdgeInsets.symmetric(vertical: 5),
               ),
               onPressed: () async {
-                // Fetch nutrients from Firestore
-                DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(widget.menu).get();
-                if (snapshot.exists) {
-                  Map<String, dynamic> nutrients = {};
-
-                  // Get 'nutrients' document
-                  DocumentSnapshot nutrientsSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').get();
-
-                  if (nutrientsSnapshot.exists) {
-                    // Get energy value from 'nutrients' document
-                    nutrients['에너지'] = nutrientsSnapshot.get('energy');
-
-                    // Get carbohydrate, protein, and fat values from 'super' collection
-                    DocumentSnapshot superSnapshot = await nutrientsSnapshot.reference.collection('super').doc('super').get();
-                    nutrients['탄수화물'] = superSnapshot.get('carbohydrate');
-                    nutrients['단백질'] = superSnapshot.get('protein');
-                    nutrients['지방'] = superSnapshot.get('fat');
-
-                    // Get additional nutrients from 'sub' collection
-                    DocumentSnapshot subSnapshot = await nutrientsSnapshot.reference.collection('sub').doc('sub').get();
-                    if (subSnapshot.exists) {
-                      Map<String, dynamic> subData = subSnapshot.data() as Map<String, dynamic>;
-                      subData.forEach((key, value) {
-                        nutrients[key] = value;
-                      });
-                    }
-
-                    // Navigate to NutrientInfoPage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NutrientInfoPage(foodName: widget.menu, nutrients: nutrients),
-                      ),
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return Center(
+                      child: CircularProgressIndicator(),
                     );
+                  },
+                );
+
+                try {
+                  // Fetch nutrients from Firestore
+                  DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(widget.menu).get();
+                  if (snapshot.exists) {
+                    Map<String, dynamic> nutrients = {};
+
+                    // Get 'nutrients' document
+                    DocumentSnapshot nutrientsSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').get();
+
+                    if (nutrientsSnapshot.exists) {
+                      // Get energy value from 'nutrients' document
+                      nutrients['에너지'] = nutrientsSnapshot.get('energy');
+
+                      // Get carbohydrate, protein, and fat values from 'super' collection
+                      DocumentSnapshot superSnapshot = await nutrientsSnapshot.reference.collection('super').doc('super').get();
+                      nutrients['탄수화물'] = superSnapshot.get('carbohydrate');
+                      nutrients['단백질'] = superSnapshot.get('protein');
+                      nutrients['지방'] = superSnapshot.get('fat');
+
+                      // Get additional nutrients from 'sub' collection
+                      DocumentSnapshot subSnapshot = await nutrientsSnapshot.reference.collection('sub').doc('sub').get();
+                      if (subSnapshot.exists) {
+                        Map<String, dynamic> subData = subSnapshot.data() as Map<String, dynamic>;
+                        subData.forEach((key, value) {
+                          nutrients[key] = value;
+                        });
+                      }
+
+                      Navigator.pop(context); // Close the loading dialog
+
+                      // Navigate to NutrientInfoPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NutrientInfoPage(foodName: widget.menu, nutrients: nutrients),
+                        ),
+                      );
+                    }
                   }
+                } catch (e) {
+                  Navigator.pop(context); // Close the loading dialog if there's an error
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('오류 발생'),
+                        content: Text('영양소 정보를 불러오는 중 오류가 발생했습니다.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('확인'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 }
               },
               child: Text(
