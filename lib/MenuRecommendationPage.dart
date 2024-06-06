@@ -86,9 +86,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
           ),
         ],
       ),
-      body: _isLoading ? Center(
-        child: CircularProgressIndicator(), // 로딩 인디케이터
-      ) : Center(
+      body: Center(
         child: Column(
           children: [
             Padding(
@@ -118,6 +116,8 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                     builder: (context) => NewPage(restaurants: restaurants, position: position!), // 새로운 페이지 위젯을 여기에 제공
                   ),
                 );
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('식당을 확인하려면 마커를 클릭해보세요!')));
               },
               child: Container(
                 margin: EdgeInsets.only(top: 20, bottom: 20),
@@ -135,6 +135,46 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                   },
                 ),
               ),
+            ),
+            SizedBox(height: 40),
+            _isLoading ?  Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
+                        style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        children: <TextSpan>[
+                          TextSpan(text: '식당을 불러오고 있어요!'),
+                        ]
+                    ),
+                  ),
+                ],
+              ), // 로딩 인디케이터
+            ) : Container(
+              child: restaurants.isEmpty ?
+              RichText(
+                textAlign: TextAlign.center,
+                text: const TextSpan(
+                  style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                  children: <TextSpan>[
+                    TextSpan(text: '주변에 식당이 없어요!'),
+                  ]
+                ),
+              )
+                  :
+              RichText(
+                textAlign: TextAlign.center,
+                text: const TextSpan(
+                    style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(text: '음식 사진을 클릭하세요!'),
+                    ]
+                ),
+              ),
+
             ),
           ],
         ),
@@ -222,19 +262,20 @@ class WebViewPage extends StatefulWidget {
 
 class _WebViewPageState extends State<WebViewPage> {
 
-  WebViewController? webViewController;
+  late WebViewController webViewController;
 
   @override
   void initState() {
     super.initState();
-    webViewController!.clearCache();
-    // 입력받은 URL에서 http를 https로 변경
-    String modifiedUrl = widget.url.replaceAll('http://', 'https://');
 
+    String modifiedUrl = widget.url.replaceAll('http://', 'https://');
     // WebView 초기화
     webViewController = WebViewController()
       ..loadRequest(Uri.parse(modifiedUrl))
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    webViewController.clearCache();
+    // 입력받은 URL에서 http를 https로 변경
   }
 
   @override
@@ -243,7 +284,7 @@ class _WebViewPageState extends State<WebViewPage> {
       appBar: AppBar(
         title: Text('WebView'),
       ),
-      body: WebViewWidget(controller: webViewController!),
+      body: WebViewWidget(controller: webViewController),
     );
   }
 }
@@ -276,6 +317,16 @@ class _NewPageState extends State<NewPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('지도'),
+          actions: [
+              IconButton(
+                icon: Icon(Icons.map),
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => NewPage(restaurants: widget.restaurants, position: widget.position)),
+                  );
+                },
+            ),],
       ),
       body: Center(
         child:
@@ -291,7 +342,7 @@ class _NewPageState extends State<NewPage> {
                     latLng: LatLng(double.parse(widget.restaurants[i]['y']), double.parse(widget.restaurants[i]['x'])),
 
                     //infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
-                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
+                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_self">식당 정보</a></div>',
                     infoWindowRemovable: true,
                     //infoWindowFirstShow: false,
                 ),
@@ -318,8 +369,8 @@ class _NewPageState extends State<NewPage> {
           center: LatLng(widget.position.latitude, widget.position.longitude),
           currentLevel: 6, // 얼마나 확대할지
           onMarkerTap: ((markerId, latLng, zoomLevel) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('식당정보를 누르면 확인가능합니다.')));
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(content: Text('식당정보를 클릭하세요!')));
           }),
         ),
       ),
