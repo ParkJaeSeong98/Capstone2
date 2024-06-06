@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'HealthModePage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // for kakaomap API
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,14 +10,41 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 class NutrientInfoPage extends StatelessWidget {
   final String foodName;
   final Map<String, dynamic> nutrients;
+  final List<String> selectedNutrients;
 
-  const NutrientInfoPage({Key? key, required this.foodName, required this.nutrients}) : super(key: key);
+  const NutrientInfoPage({
+    Key? key,
+    required this.foodName,
+    required this.nutrients,
+    required this.selectedNutrients,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    List<MapEntry<String, dynamic>> otherNutrients = nutrients.entries
+        .where((entry) => !['에너지', '탄수화물', '단백질', '지방'].contains(entry.key))
+        .toList();
+
+    // 사용자가 선택한 기타영양소와 일치하는 영양소를 맨 위로 이동
+    otherNutrients.sort((a, b) {
+      bool aContainsSelected = selectedNutrients.any((selectedNutrient) =>
+          a.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
+      bool bContainsSelected = selectedNutrients.any((selectedNutrient) =>
+          b.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
+
+      if (aContainsSelected && !bContainsSelected) {
+        return -1;
+      } else if (!aContainsSelected && bContainsSelected) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$foodName 영양소 정보'),
@@ -39,10 +67,17 @@ class NutrientInfoPage extends StatelessWidget {
             title: Text('기타 영양소'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: nutrients.entries
-                  .where((entry) => !['에너지', '탄수화물', '단백질', '지방'].contains(entry.key))
-                  .map((entry) => Text('${entry.key}: ${entry.value}'))
-                  .toList(),
+              children: otherNutrients.map((entry) {
+                final isSelected = selectedNutrients.any((selectedNutrient) =>
+                    entry.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
+                return Text(
+                  '${entry.key}: ${entry.value}',
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.blue : Colors.black,
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -247,22 +282,28 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
 
                     if (nutrientsSnapshot.exists) {
                       // Get energy value from 'nutrients' document
-                      nutrients['에너지'] = nutrientsSnapshot.get('energy');
+                      nutrients['에너지'] = nutrientsSnapshot.get('energy') ?? '';
 
                       // Get carbohydrate, protein, and fat values from 'super' collection
                       DocumentSnapshot superSnapshot = await nutrientsSnapshot.reference.collection('super').doc('super').get();
-                      nutrients['탄수화물'] = superSnapshot.get('carbohydrate');
-                      nutrients['단백질'] = superSnapshot.get('protein');
-                      nutrients['지방'] = superSnapshot.get('fat');
+                      nutrients['탄수화물'] = superSnapshot.get('carbohydrate') ?? '';
+                      nutrients['단백질'] = superSnapshot.get('protein') ?? '';
+                      nutrients['지방'] = superSnapshot.get('fat') ?? '';
 
                       // Get additional nutrients from 'sub' collection
                       DocumentSnapshot subSnapshot = await nutrientsSnapshot.reference.collection('sub').doc('sub').get();
                       if (subSnapshot.exists) {
-                        Map<String, dynamic> subData = subSnapshot.data() as Map<String, dynamic>;
-                        subData.forEach((key, value) {
-                          nutrients[key] = value;
-                        });
+                        Map<String, dynamic>? subData = subSnapshot.data() as Map<String, dynamic>?;
+                        if (subData != null) {
+                          subData.forEach((key, value) {
+                            nutrients[key] = value ?? '';
+                          });
+                        }
                       }
+
+                      // Get selected additional nutrients from SharedPreferences
+                      SharedPreferences prefs = await SharedPreferences.getInstance();
+                      List<String> selectedNutrients = prefs.getStringList('addedNutrients') ?? [];
 
                       Navigator.pop(context); // Close the loading dialog
 
@@ -270,7 +311,11 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => NutrientInfoPage(foodName: widget.menu, nutrients: nutrients),
+                          builder: (context) => NutrientInfoPage(
+                            foodName: widget.menu,
+                            nutrients: nutrients,
+                            selectedNutrients: selectedNutrients, // Pass the selected additional nutrients
+                          ),
                         ),
                       );
                     }
