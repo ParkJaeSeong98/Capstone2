@@ -7,6 +7,51 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class NutrientInfoPage extends StatelessWidget {
+  final String foodName;
+  final Map<String, dynamic> nutrients;
+
+  const NutrientInfoPage({Key? key, required this.foodName, required this.nutrients}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('$foodName 영양소 정보'),
+      ),
+      body: ListView(
+        children: [
+          ListTile(
+            title: Text('주요 영양소'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('에너지: ${nutrients['에너지']}'),
+                Text('탄수화물: ${nutrients['탄수화물']}'),
+                Text('단백질: ${nutrients['단백질']}'),
+                Text('지방: ${nutrients['지방']}'),
+              ],
+            ),
+          ),
+          ListTile(
+            title: Text('기타 영양소'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: nutrients.entries
+                  .where((entry) => !['에너지', '탄수화물', '단백질', '지방'].contains(entry.key))
+                  .map((entry) => Text('${entry.key}: ${entry.value}'))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class MenuRecommendationPage extends StatefulWidget {
   final String mealTime;
@@ -168,6 +213,64 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
 
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white, // 원하는 배경색으로 설정
+        child: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 5),
+              ),
+              onPressed: () async {
+                // Fetch nutrients from Firestore
+                DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(widget.menu).get();
+                if (snapshot.exists) {
+                  Map<String, dynamic> nutrients = {};
+
+                  // Get 'nutrients' document
+                  DocumentSnapshot nutrientsSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').get();
+
+                  if (nutrientsSnapshot.exists) {
+                    // Get energy value from 'nutrients' document
+                    nutrients['에너지'] = nutrientsSnapshot.get('energy');
+
+                    // Get carbohydrate, protein, and fat values from 'super' collection
+                    DocumentSnapshot superSnapshot = await nutrientsSnapshot.reference.collection('super').doc('super').get();
+                    nutrients['탄수화물'] = superSnapshot.get('carbohydrate');
+                    nutrients['단백질'] = superSnapshot.get('protein');
+                    nutrients['지방'] = superSnapshot.get('fat');
+
+                    // Get additional nutrients from 'sub' collection
+                    DocumentSnapshot subSnapshot = await nutrientsSnapshot.reference.collection('sub').doc('sub').get();
+                    if (subSnapshot.exists) {
+                      Map<String, dynamic> subData = subSnapshot.data() as Map<String, dynamic>;
+                      subData.forEach((key, value) {
+                        nutrients[key] = value;
+                      });
+                    }
+
+                    // Navigate to NutrientInfoPage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NutrientInfoPage(foodName: widget.menu, nutrients: nutrients),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                '음식 영양소 보기',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+          ),
         ),
       ),
     );
