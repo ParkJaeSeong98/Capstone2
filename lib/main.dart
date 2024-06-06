@@ -354,12 +354,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateAndSelectRadius() async {
     final selectedRadius = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SelectRadiusPage()),
+      MaterialPageRoute(
+        builder: (context) => SelectRadiusPage(initialRadius: radius),
+      ),
     );
 
     if (selectedRadius != null) {
       setState(() {
-        radius = selectedRadius * 1000;
+        radius = selectedRadius;
       });
     }
   }
@@ -372,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(""),
         leading: IconButton(
-          icon: Icon(Icons.add),
+          icon: Icon(Icons.explore),
           onPressed: _navigateAndSelectRadius,
         ),
         actions: [
@@ -409,12 +411,23 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class SelectRadiusPage extends StatefulWidget {
+  final int initialRadius;
+
+  SelectRadiusPage({required this.initialRadius});
+
   @override
   _SelectRadiusPageState createState() => _SelectRadiusPageState();
 }
 
 class _SelectRadiusPageState extends State<SelectRadiusPage> {
-  int _selectedRadius = 3;
+  late int _selectedRadius;
+
+  @override
+  void initState() {
+    super.initState();
+    // initialRadius가 미터 단위이므로 킬로미터 단위로 변환
+    _selectedRadius = (widget.initialRadius / 1000).round();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -423,31 +436,60 @@ class _SelectRadiusPageState extends State<SelectRadiusPage> {
         title: Text('식당 검색 반경'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Text(
+              '원하는 반경을 선택해주세요!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 40),
             for (var radius in [1, 3, 5, 10])
-              ListTile(
-                title: Text(
-                  '$radius km',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: radius == 3 ? FontWeight.bold : FontWeight.normal,
-                    color: radius == 3 ? Colors.blue : Colors.black,
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 3,
+                child: ListTile(
+                  title: Text(
+                    '$radius km',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: radius == _selectedRadius
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: radius == _selectedRadius
+                          ? Colors.blue
+                          : Colors.black,
+                    ),
+                  ),
+                  leading: Radio<int>(
+                    value: radius,
+                    groupValue: _selectedRadius,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRadius = value!;
+                      });
+                    },
                   ),
                 ),
-                leading: Radio<int>(
-                  value: radius,
-                  groupValue: _selectedRadius,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedRadius = value!;
-                    });
-                    Navigator.pop(context, _selectedRadius);
-                  },
-                ),
               ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // _selectedRadius는 킬로미터 단위이므로 미터 단위로 변환하여 반환
+                Navigator.pop(context, _selectedRadius * 1000);
+              },
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              child: Text('확인'),
+            ),
           ],
         ),
       ),
