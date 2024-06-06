@@ -157,35 +157,40 @@ class _HealthModePageState extends State<HealthModePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              SizedBox(width: 25),
-              Image.asset(entry.value, width: 100, height: 100, fit: BoxFit.contain),
-              SizedBox(width: 6),
-              ...intakeLevels.map((level) => buildLevelSelector(entry, level)).toList(),
-              Transform.translate(
-                offset: Offset(-15, -10),  // 아이콘을 왼쪽으로 이동하고 위로 이동
-                child: IconButton(
-                  icon: Icon(Icons.info),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(entry.key),
-                          content: Text(nutrientRecommendations[entry.key]!),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('확인'),
-                            ),
-                          ],
+              SizedBox(width: 20),
+              Stack(
+                children: [
+                  Image.asset(entry.value, width: 100, height: 100, fit: BoxFit.contain),
+                  Positioned(
+                    top: -13,
+                    left: -13,
+                    child: IconButton(
+                      icon: Icon(Icons.info, size: 24),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(entry.key),
+                              content: Text(nutrientRecommendations[entry.key]!),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('확인'),
+                                ),
+                              ],
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
+              SizedBox(width: 6),
+              ...intakeLevels.map((level) => buildLevelSelector(entry, level)).toList(),
             ],
           ),
         )).toList(),
@@ -200,7 +205,6 @@ class _HealthModePageState extends State<HealthModePage> {
       ],
     );
   }
-
 
   String selectedMessage = '';
 
