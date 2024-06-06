@@ -161,27 +161,30 @@ class _HealthModePageState extends State<HealthModePage> {
               Image.asset(entry.value, width: 100, height: 100, fit: BoxFit.contain),
               SizedBox(width: 6),
               ...intakeLevels.map((level) => buildLevelSelector(entry, level)).toList(),
-              IconButton(
-                icon: Icon(Icons.info),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text(entry.key),
-                        content: Text(nutrientRecommendations[entry.key]!),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Text('확인'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
+              Transform.translate(
+                offset: Offset(-15, -10),  // 아이콘을 왼쪽으로 이동하고 위로 이동
+                child: IconButton(
+                  icon: Icon(Icons.info),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text(entry.key),
+                          content: Text(nutrientRecommendations[entry.key]!),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('확인'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -197,6 +200,7 @@ class _HealthModePageState extends State<HealthModePage> {
       ],
     );
   }
+
 
   String selectedMessage = '';
 
