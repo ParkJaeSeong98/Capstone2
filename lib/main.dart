@@ -79,6 +79,29 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String getMealTimeText() { // 시간 가져오는 메서드
+    DateTime now = DateTime.now();
+    int hour = now.hour;
+
+    if (hour >= 6 && hour < 11) {
+      return '아침';
+    } else if (hour >= 11 && hour < 16) {
+      return '점심';
+    } else if (hour >= 16 && hour < 21) {
+      return '저녁';
+    } else {
+      return '야식';
+    }
+  }
+
+  String getCurrentTime() {
+    DateTime now = DateTime.now();
+    String hour = now.hour.toString().padLeft(2, '0');
+    String minute = now.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute';
+  }
+
   Future<Map<String, dynamic>> _fetchFoodNutrients(String foodName) async {
     DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(foodName).get();
 
@@ -254,8 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
+          String mealTimeText = getMealTimeText();
           return AlertDialog(
-            title: Text('오늘 점심은 이거다!'),
+            title: Text('오늘 $mealTimeText은 이거다!'),
             titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 30.0),
             content: Text(
               '$selectedItem',
@@ -280,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.of(context).pop(); // First, close the dialog
                     Navigator.push( // Then, navigate to the next page.
                       context,
-                      MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: "lunch", menu: selectedItem!)),
+                      MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: mealTimeText, menu: selectedItem!)),
                     );
                   },
                   child: Text('확인'),
@@ -295,6 +319,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    String mealTimeText = getMealTimeText();
+    String currentTime = getCurrentTime();
     return Scaffold(
       appBar: AppBar(
         title: Text(""),
@@ -313,10 +339,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "점심, 뭐 먹을까?",
-              style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
-            ),
+            Text('지금 시각은 $currentTime',
+              style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),),
+            SizedBox(height: 8),
+            SizedBox(height: 50),
+            Text('오늘 $mealTimeText은 이거다!',
+              style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),),
             SizedBox(height: 50),
             _foodItems.isEmpty
                 ? CircularProgressIndicator()
