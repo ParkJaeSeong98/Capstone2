@@ -3,6 +3,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'nutrients_list.dart';
 
+Map<String, Map<String, String>> nutrientMessages = {
+  'Carbohydrates': {
+    '조금': '탄수화물 섭취량이 부족하면 에너지 부족으로 이어질 수 있습니다.',
+    '보통': '적절한 탄수화물 섭취는 건강한 식단에 중요합니다.',
+    '많이': '너무 많은 탄수화물을 섭취할 시 혈당이 급격하게 상승할 수 있습니다.',
+  },
+  'Protein': {
+    '조금': '단백질 섭취량이 부족하면 근육량 유지에 어려움이 있을 수 있습니다.',
+    '보통': '충분한 단백질 섭취는 근육 성장과 유지에 도움이 됩니다.',
+    '많이': '과도한 단백질 섭취는 신장에 부담을 줄 수 있습니다.',
+  },
+  'Fats': {
+    '조금': '지방 섭취량이 너무 적으면 호르몬 불균형이 생길 수 있습니다.',
+    '보통': '적절한 지방 섭취는 건강한 호르몬 밸런스에 도움이 됩니다.',
+    '많이': '과도한 지방 섭취는 비만과 심혈관 질환의 위험을 높일 수 있습니다.',
+  },
+};
+
 class HealthModePage extends StatefulWidget {
   @override
   _HealthModePageState createState() => _HealthModePageState();
@@ -127,20 +145,32 @@ class _HealthModePageState extends State<HealthModePage> {
 
   Column buildNutrientSelection() {
     return Column(
-      children: nutrientImages.entries.map((entry) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            SizedBox(width: 25),
-            Image.asset(entry.value, width: 100, height: 100, fit: BoxFit.contain),
-            SizedBox(width: 6),
-            ...intakeLevels.map((level) => buildLevelSelector(entry, level)).toList(),
-          ],
+      children: [
+        ...nutrientImages.entries.map((entry) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(width: 25),
+              Image.asset(entry.value, width: 100, height: 100, fit: BoxFit.contain),
+              SizedBox(width: 6),
+              ...intakeLevels.map((level) => buildLevelSelector(entry, level)).toList(),
+            ],
+          ),
+        )).toList(),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            selectedMessage,
+            style: TextStyle(fontSize: 16, color: Colors.black),
+            textAlign: TextAlign.center,
+          ),
         ),
-      )).toList(),
+      ],
     );
   }
+
+  String selectedMessage = '';
 
   Padding buildLevelSelector(MapEntry<String, String> entry, String level) {
     return Padding(
@@ -152,8 +182,9 @@ class _HealthModePageState extends State<HealthModePage> {
             onTap: () {
               setState(() {
                 selectedLevels[entry.key] = level;
+                selectedMessage = nutrientMessages[entry.key]![level]!;
               });
-              saveUserPreferences(); // 추가
+              saveUserPreferences();
             },
             child: Container(
               width: 32,
