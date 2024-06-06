@@ -381,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _toggleHealthMode,
           ),
           IconButton(
-            icon: Icon(Icons.account_circle),
+            icon: Icon(Icons.person),
             onPressed: _editHealthMode,
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'HealthModePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'nutrients_list.dart';
 // for kakaomap API
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -29,7 +30,7 @@ class NutrientInfoPage extends StatelessWidget {
         .where((entry) => !['에너지', '탄수화물', '단백질', '지방'].contains(entry.key))
         .toList();
 
-    // 사용자가 선택한 기타영양소와 일치하는 영양소를 맨 위로 이동
+    // 사용자가 선택한 기타 영양소와 일치하는 영양소를 맨 위로 이동
     otherNutrients.sort((a, b) {
       bool aContainsSelected = selectedNutrients.any((selectedNutrient) =>
           a.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
@@ -49,35 +50,70 @@ class NutrientInfoPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('$foodName 영양소 정보'),
       ),
-      body: ListView(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Text(
+              '주요 영양소',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            _buildNutrientInfo('에너지', nutrients['에너지']),
+            _buildNutrientInfo('탄수화물', nutrients['탄수화물']),
+            _buildNutrientInfo('단백질', nutrients['단백질']),
+            _buildNutrientInfo('지방', nutrients['지방']),
+            Divider(height: 32, thickness: 2),
+            Text(
+              '기타 영양소',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            ...otherNutrients.map((entry) {
+              final isSelected = selectedNutrients.any((selectedNutrient) =>
+                  entry.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
+              return _buildNutrientInfo(entry.key, entry.value, isSelected);
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutrientInfo(String name, dynamic value, [bool isSelected = false]) {
+    // 띄어쓰기를 무시하고 단위 매핑
+    String unit = nutrientUnits.entries
+        .firstWhere(
+          (entry) => name.replaceAll(' ', '').contains(entry.key.replaceAll(' ', '')),
+      orElse: () => MapEntry('', ''),
+    )
+        .value;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          ListTile(
-            title: Text('주요 영양소'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('에너지: ${nutrients['에너지']}'),
-                Text('탄수화물: ${nutrients['탄수화물']}'),
-                Text('단백질: ${nutrients['단백질']}'),
-                Text('지방: ${nutrients['지방']}'),
-              ],
+          Text(
+            '$name:',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Colors.blue : Colors.black,
             ),
           ),
-          ListTile(
-            title: Text('기타 영양소'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: otherNutrients.map((entry) {
-                final isSelected = selectedNutrients.any((selectedNutrient) =>
-                    entry.key.replaceAll(' ', '').contains(selectedNutrient.replaceAll(' ', '')));
-                return Text(
-                  '${entry.key}: ${entry.value}',
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? Colors.blue : Colors.black,
-                  ),
-                );
-              }).toList(),
+          Text(
+            '$value $unit',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Colors.blue : Colors.black,
             ),
           ),
         ],
@@ -85,6 +121,7 @@ class NutrientInfoPage extends StatelessWidget {
     );
   }
 }
+
 
 class MenuRecommendationPage extends StatefulWidget {
   final String mealTime;
