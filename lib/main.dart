@@ -158,20 +158,47 @@ class _HomeScreenState extends State<HomeScreen> {
     return {};
   }
 
-  bool _matchesNutrientLevel(dynamic value, String level) {
+  bool _matchesNutrientLevel(String nutrient, dynamic value, String level) {
     if (value == null) return false;
 
     double nutrientValue = value.toDouble();
 
-    switch (level) {
-      case '조금':
-        return nutrientValue <= 5;
-      case '보통':
-        return nutrientValue > 5 && nutrientValue <= 10;
-      case '많이':
-        return nutrientValue > 10;
+    switch (nutrient) {
+      case 'carbohydrate':
+        switch (level) {
+          case '조금':
+            return nutrientValue <= 17.5;
+          case '보통':
+            return nutrientValue > 17.5 && nutrientValue <= 25;
+          case '많이':
+            return nutrientValue > 25;
+          default:
+            return true;
+        }
+      case 'protein':
+        switch (level) {
+          case '조금':
+            return nutrientValue <= 3.75;
+          case '보통':
+            return nutrientValue > 3.75 && nutrientValue <= 6;
+          case '많이':
+            return nutrientValue > 6;
+          default:
+            return true;
+        }
+      case 'fat':
+        switch (level) {
+          case '조금':
+            return nutrientValue <= 2.5;
+          case '보통':
+            return nutrientValue > 3.75 && nutrientValue <= 6;
+          case '많이':
+            return nutrientValue > 5;
+          default:
+            return true;
+        }
       default:
-        return true;
+        return false;
     }
   }
 
@@ -247,9 +274,9 @@ class _HomeScreenState extends State<HomeScreen> {
       for (String foodItem in _foodItems) {
         Map<String, dynamic> nutrients = _cachedNutrients[foodItem] as Map<String, dynamic>;
 
-        bool matchesCarbohydrates = _matchesNutrientLevel(nutrients['carbohydrate'], carbohydratesLevel);
-        bool matchesProtein = _matchesNutrientLevel(nutrients['protein'], proteinLevel);
-        bool matchesFats = _matchesNutrientLevel(nutrients['fat'], fatsLevel);
+        bool matchesCarbohydrates = _matchesNutrientLevel('carbohydrate', nutrients['carbohydrate'], carbohydratesLevel);
+        bool matchesProtein = _matchesNutrientLevel('protein', nutrients['protein'], proteinLevel);
+        bool matchesFats = _matchesNutrientLevel('fat', nutrients['fat'], fatsLevel);
 
         bool containsSavedNutrients = savedNutrients.every((savedNutrient) {
           return nutrients.keys.any((nutrient) {

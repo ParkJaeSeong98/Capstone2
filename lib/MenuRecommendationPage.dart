@@ -55,6 +55,14 @@ class NutrientInfoPage extends StatelessWidget {
         child: ListView(
           children: [
             Text(
+              '100g 함량 기준',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10,),
+            Text(
               '주요 영양소',
               style: TextStyle(
                 fontSize: 20,

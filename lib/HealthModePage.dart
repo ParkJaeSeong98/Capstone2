@@ -88,6 +88,59 @@ class _HealthModePageState extends State<HealthModePage> {
       appBar: AppBar(
         title: Text("Health Mode"),
         automaticallyImplyLeading: false, // 화살표 숨기기
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "정보",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 30.0),
+                    content: Text(
+                      "보건복지부 주요 영양소 일일 권장 섭취량을 기반으로 함." +
+                          "\n하루에 세 끼, 한 끼에 600g 먹는다고 가정하고 " +
+                          "한 끼 식사의 주요 영양소 수준을 추정함.",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                    actions: [
+                      ButtonBar(
+                        alignment: MainAxisAlignment.center, // Center the button
+                        children: [
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: Color(0xFF57BD85),
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('확인'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
