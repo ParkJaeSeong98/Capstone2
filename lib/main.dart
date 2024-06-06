@@ -193,7 +193,12 @@ class _HomeScreenState extends State<HomeScreen> {
         bool matchesCarbohydrates = _matchesNutrientLevel(nutrients['carbohydrate'], carbohydratesLevel);
         bool matchesProtein = _matchesNutrientLevel(nutrients['protein'], proteinLevel);
         bool matchesFats = _matchesNutrientLevel(nutrients['fat'], fatsLevel);
-        bool containsSavedNutrients = savedNutrients.every((nutrient) => nutrients.containsKey(nutrient));
+
+        bool containsSavedNutrients = savedNutrients.every((savedNutrient) {
+          return nutrients.keys.any((nutrient) {
+            return nutrient.contains(savedNutrient) && nutrients[nutrient] > 0;
+          });
+        });
 
         if (matchesCarbohydrates && matchesProtein && matchesFats && containsSavedNutrients) {
           filteredFoodItems.add(foodItem);
