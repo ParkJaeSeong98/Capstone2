@@ -73,6 +73,49 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // 음식 데이터 영양성분 가져오는 메서드
+  Future<Map<String, dynamic>> _fetchFoodNutrients(String foodName) async {
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(foodName).get();
+
+    if (snapshot.exists) {
+      Map<String, dynamic> nutrients = {};
+
+      // Get carbohydrate, protein, and fat values
+      DocumentSnapshot superSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('super').doc('super').get();
+      nutrients['carbohydrate'] = superSnapshot.get('carbohydrate');
+      nutrients['protein'] = superSnapshot.get('protein');
+      nutrients['fat'] = superSnapshot.get('fat');
+
+      // Get additional nutrients
+      QuerySnapshot subSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('sub').get();
+      for (QueryDocumentSnapshot doc in subSnapshot.docs) {
+        nutrients.addAll(doc.data() as Map<String, dynamic>);
+      }
+
+      return nutrients;
+    }
+
+    return {};
+  }
+
+  // 조금, 보통, 많이 값 설정 맞는지 확인하는 메서드
+  bool _matchesNutrientLevel(dynamic value, String level) {
+    if (value == null) return false;
+
+    double nutrientValue = value.toDouble();
+
+    switch (level) {
+      case '조금':
+        return nutrientValue <= 5;
+      case '보통':
+        return nutrientValue > 5 && nutrientValue <= 10;
+      case '많이':
+        return nutrientValue > 10;
+      default:
+        return true;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -130,45 +173,70 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _spinRoulette() {
+  void _spinRoulette() async {
     if (_foodItems.isEmpty) return;
-    final random = Random();
-    final randomIndex = random.nextInt(_foodItems.length); // 랜덤 인덱스 생성
-    final selectedItem = _foodItems[randomIndex]; //
+
+    String selectedItem;
+
+    if (_isHealthMode) {
+      // HealthMode ON: 사용자 선택에 맞는 음식 메뉴 추천
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String carbohydratesLevel = prefs.getString('carbohydratesLevel') ?? '';
+      String proteinLevel = prefs.getString('proteinLevel') ?? '';
+      String fatsLevel = prefs.getString('fatsLevel') ?? '';
+      List<String> savedNutrients = prefs.getStringList('addedNutrients') ?? [];
+
+      List<String> filteredFoodItems = [];
+
+      for (String foodItem in _foodItems) {
+        Map<String, dynamic> nutrients = await _fetchFoodNutrients(foodItem);
+
+        bool matchesCarbohydrates = _matchesNutrientLevel(nutrients['carbohydrate'], carbohydratesLevel);
+        bool matchesProtein = _matchesNutrientLevel(nutrients['protein'], proteinLevel);
+        bool matchesFats = _matchesNutrientLevel(nutrients['fat'], fatsLevel);
+        bool containsSavedNutrients = savedNutrients.every((nutrient) => nutrients.containsKey(nutrient));
+
+        if (matchesCarbohydrates && matchesProtein && matchesFats && containsSavedNutrients) {
+          filteredFoodItems.add(foodItem);
+        }
+      }
+
+      if (filteredFoodItems.isNotEmpty) {
+        final random = Random();
+        final randomIndex = random.nextInt(filteredFoodItems.length);
+        selectedItem = filteredFoodItems[randomIndex];
+      } else {
+        // 조건에 맞는 음식이 없을 경우 전체 음식 중에서 랜덤 선택
+        final random = Random();
+        final randomIndex = random.nextInt(_foodItems.length);
+        selectedItem = _foodItems[randomIndex];
+      }
+    } else {
+      // HealthMode OFF: 전체 음식 중에서 랜덤 선택
+      final random = Random();
+      final randomIndex = random.nextInt(_foodItems.length);
+      selectedItem = _foodItems[randomIndex];
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('오늘 점심은 이거다!'),
-          titlePadding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 30.0),
           content: Text(
             '$selectedItem',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           actions: [
-            Container(
-              margin: EdgeInsets.only(bottom: 10.0, right: 10.0),
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF57BD85),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop(); // First, close the dialog
-                  Navigator.push( // Then, navigate to the next page.
-                    context,
-                    MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: "lunch", menu: selectedItem)),
-                  );
-                },
-                child: Text('확인'),
-              ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: "lunch", menu: selectedItem)),
+                );
+              },
+              child: Text('확인'),
             ),
           ],
         );
