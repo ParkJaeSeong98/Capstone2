@@ -144,7 +144,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
               ),
             ),
             GestureDetector(
-              onTap: () {
+              onTap: !_isLoading ? () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -154,7 +154,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('식당을 확인하려면 마커를 클릭해보세요!')));
-              },
+              } : null,
               child: Container(
                 margin: EdgeInsets.only(top: 20, bottom: 20),
                 width: 350,
