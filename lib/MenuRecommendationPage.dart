@@ -74,16 +74,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
       appBar: AppBar(
         title: Text(''),
         actions: <Widget>[
-          IconButton(
-            icon: Image.asset(_isHealthMode ? 'assets/images/on_button.png' : 'assets/images/off_button.png'),
-            onPressed: toggleHealthMode,
-          ),
-          IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {
-              // Implement navigation to MyPage
-            },
-          ),
+
         ],
       ),
       body: Center(

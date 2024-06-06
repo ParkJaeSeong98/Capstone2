@@ -63,30 +63,33 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isHealthMode = false; // Track the state of the Health Mode
+  bool _isHealthMode = false;
   List<String> _foodItems = [];
+  Map<String, Map<String, dynamic>> _cachedNutrients = {};
 
   Future<void> _fetchFoodItems() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('foods').get();
     setState(() {
       _foodItems = snapshot.docs.map((doc) => doc['name'] as String).toList();
     });
+
+    // 음식 영양 성분 미리 가져오기
+    for (String foodItem in _foodItems) {
+      _cachedNutrients[foodItem] = await _fetchFoodNutrients(foodItem);
+    }
   }
 
-  // 음식 데이터 영양성분 가져오는 메서드
   Future<Map<String, dynamic>> _fetchFoodNutrients(String foodName) async {
     DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(foodName).get();
 
     if (snapshot.exists) {
       Map<String, dynamic> nutrients = {};
 
-      // Get carbohydrate, protein, and fat values
       DocumentSnapshot superSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('super').doc('super').get();
       nutrients['carbohydrate'] = superSnapshot.get('carbohydrate');
       nutrients['protein'] = superSnapshot.get('protein');
       nutrients['fat'] = superSnapshot.get('fat');
 
-      // Get additional nutrients
       QuerySnapshot subSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('sub').get();
       for (QueryDocumentSnapshot doc in subSnapshot.docs) {
         nutrients.addAll(doc.data() as Map<String, dynamic>);
@@ -98,7 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return {};
   }
 
-  // 조금, 보통, 많이 값 설정 맞는지 확인하는 메서드
   bool _matchesNutrientLevel(dynamic value, String level) {
     if (value == null) return false;
 
@@ -134,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (hasUserPreferences) {
       setState(() {
-        _isHealthMode = !_isHealthMode; // Toggle the health mode state
+        _isHealthMode = !_isHealthMode;
       });
     } else {
       Navigator.push(
@@ -156,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _editHealthMode() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    bool newHealthMode = !_isHealthMode;  // Calculate the new mode state before navigation
+    bool newHealthMode = !_isHealthMode;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -164,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
         settings: RouteSettings(arguments: newHealthMode),
       ),
     ).then((returnedMode) {
-      // Use the returnedMode to update the state if it is not null
       if (returnedMode != null) {
         setState(() {
           _isHealthMode = returnedMode as bool;
@@ -177,19 +178,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_foodItems.isEmpty) return;
 
     String selectedItem;
+    List<String> filteredFoodItems = [];
 
     if (_isHealthMode) {
-      // HealthMode ON: 사용자 선택에 맞는 음식 메뉴 추천
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String carbohydratesLevel = prefs.getString('carbohydratesLevel') ?? '';
       String proteinLevel = prefs.getString('proteinLevel') ?? '';
       String fatsLevel = prefs.getString('fatsLevel') ?? '';
       List<String> savedNutrients = prefs.getStringList('addedNutrients') ?? [];
 
-      List<String> filteredFoodItems = [];
-
       for (String foodItem in _foodItems) {
-        Map<String, dynamic> nutrients = await _fetchFoodNutrients(foodItem);
+        Map<String, dynamic> nutrients = _cachedNutrients[foodItem] as Map<String, dynamic>;
 
         bool matchesCarbohydrates = _matchesNutrientLevel(nutrients['carbohydrate'], carbohydratesLevel);
         bool matchesProtein = _matchesNutrientLevel(nutrients['protein'], proteinLevel);
