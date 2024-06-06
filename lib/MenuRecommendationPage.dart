@@ -89,8 +89,9 @@ class NutrientInfoPage extends StatelessWidget {
 class MenuRecommendationPage extends StatefulWidget {
   final String mealTime;
   final String menu;
+  final int radius;
 
-  const MenuRecommendationPage({Key? key, required this.mealTime, required this.menu}) : super(key: key);
+  const MenuRecommendationPage({Key? key, required this.mealTime, required this.menu, required this.radius}) : super(key: key);
 
   @override
   _MenuRecommendationPageState createState() => _MenuRecommendationPageState();
@@ -101,7 +102,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
   bool _isLoading = true;
 
   final String apiKey = 'd743ba7caedcdefb200416fd7e9fffa9';
-  final int radius = 3000; // 3km 반경 내에서 검색
+  //final int radius = 3000; // 3km 반경 내에서 검색
   List<dynamic> restaurants = [];
 
   Position? position;
@@ -113,6 +114,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
     super.initState();
     AuthRepository.initialize(appKey: 'ef3b44bb326c11d6d6e504f3253729ee');  // 지도 띄우기 위한 API KEY
     _initRestaurants();
+    print(widget.radius);
   }
 
   // 비동기 메서드 이름 변경 및 호출 방법 수정
@@ -375,7 +377,7 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
 
     try {
       final url = Uri.parse(
-          'https://dapi.kakao.com/v2/local/search/keyword.json?query=$keyword&x=$longitude&y=$latitude&radius=$radius'
+          'https://dapi.kakao.com/v2/local/search/keyword.json?query=$keyword&x=$longitude&y=$latitude&radius=${widget.radius}'
         //'https://dapi.kakao.com/v2/local/search/category.json?category_group_code=FD6&x=$longitude&y=$latitude&radius=$radius' 위는 키워드, 아래는 식당카테고리
       );
       final response = await http.get(url, headers: {

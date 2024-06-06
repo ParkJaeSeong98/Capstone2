@@ -95,6 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> _foodItems = [];
   Map<String, Map<String, dynamic>> _cachedNutrients = {};
 
+  int radius = 3000;
+
   Future<void> _fetchFoodItems() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('foods').get();
     setState(() {
@@ -332,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.of(context).pop(); // First, close the dialog
                     Navigator.push( // Then, navigate to the next page.
                       context,
-                      MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: mealTimeText, menu: selectedItem!)),
+                      MaterialPageRoute(builder: (context) => MenuRecommendationPage(mealTime: mealTimeText, menu: selectedItem!, radius: radius)),
                     );
                   },
                   child: Text('확인'),
@@ -345,6 +347,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _navigateAndSelectRadius() async {
+    final selectedRadius = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SelectRadiusPage()),
+    );
+
+    if (selectedRadius != null) {
+      setState(() {
+        radius = selectedRadius * 1000;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String mealTimeText = getMealTimeText();
@@ -352,6 +367,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(""),
+        leading: IconButton(
+          icon: Icon(Icons.add),
+          onPressed: _navigateAndSelectRadius,
+        ),
         actions: [
           IconButton(
             icon: Image.asset(_isHealthMode ? 'assets/images/on_button.png' : 'assets/images/off_button.png'),
@@ -382,6 +401,53 @@ class _HomeScreenState extends State<HomeScreen> {
               spinSpeed: 0.2,
             ),
             SizedBox(height: 50),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SelectRadiusPage extends StatefulWidget {
+  @override
+  _SelectRadiusPageState createState() => _SelectRadiusPageState();
+}
+
+class _SelectRadiusPageState extends State<SelectRadiusPage> {
+  int _selectedRadius = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('식당 검색 반경'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            for (var radius in [1, 3, 5, 10])
+              ListTile(
+                title: Text(
+                  '$radius km',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: radius == 3 ? FontWeight.bold : FontWeight.normal,
+                    color: radius == 3 ? Colors.blue : Colors.black,
+                  ),
+                ),
+                leading: Radio<int>(
+                  value: radius,
+                  groupValue: _selectedRadius,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRadius = value!;
+                    });
+                    Navigator.pop(context, _selectedRadius);
+                  },
+                ),
+              ),
           ],
         ),
       ),
