@@ -51,7 +51,35 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Image.asset('assets/images/logo.png'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              width: 250,
+              height: 250,
+              fit: BoxFit.contain,
+            ),
+            SizedBox(height: 30),
+            Text(
+              '뭘 먹을지 고민이라면?',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              '푸드 컴퍼스',
+              style: TextStyle(
+                fontSize: 45,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -340,11 +368,11 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('지금 시각은 $currentTime',
-              style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),),
             SizedBox(height: 8),
             SizedBox(height: 50),
             Text('오늘 $mealTimeText은 이거다!',
-              style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),),
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),),
             SizedBox(height: 50),
             _foodItems.isEmpty
                 ? CircularProgressIndicator()
