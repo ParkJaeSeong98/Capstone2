@@ -63,14 +63,59 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isHealthMode = false; // Track the state of the Health Mode
+  bool _isHealthMode = false;
   List<String> _foodItems = [];
+  Map<String, Map<String, dynamic>> _cachedNutrients = {};
 
   Future<void> _fetchFoodItems() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('foods').get();
     setState(() {
       _foodItems = snapshot.docs.map((doc) => doc['name'] as String).toList();
     });
+
+    // 음식 영양 성분 미리 가져오기
+    for (String foodItem in _foodItems) {
+      _cachedNutrients[foodItem] = await _fetchFoodNutrients(foodItem);
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchFoodNutrients(String foodName) async {
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('foods').doc(foodName).get();
+
+    if (snapshot.exists) {
+      Map<String, dynamic> nutrients = {};
+
+      DocumentSnapshot superSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('super').doc('super').get();
+      nutrients['carbohydrate'] = superSnapshot.get('carbohydrate');
+      nutrients['protein'] = superSnapshot.get('protein');
+      nutrients['fat'] = superSnapshot.get('fat');
+
+      QuerySnapshot subSnapshot = await snapshot.reference.collection('nutrients').doc('nutrients').collection('sub').get();
+      for (QueryDocumentSnapshot doc in subSnapshot.docs) {
+        nutrients.addAll(doc.data() as Map<String, dynamic>);
+      }
+
+      return nutrients;
+    }
+
+    return {};
+  }
+
+  bool _matchesNutrientLevel(dynamic value, String level) {
+    if (value == null) return false;
+
+    double nutrientValue = value.toDouble();
+
+    switch (level) {
+      case '조금':
+        return nutrientValue <= 5;
+      case '보통':
+        return nutrientValue > 5 && nutrientValue <= 10;
+      case '많이':
+        return nutrientValue > 10;
+      default:
+        return true;
+    }
   }
 
   @override
@@ -91,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (hasUserPreferences) {
       setState(() {
-        _isHealthMode = !_isHealthMode; // Toggle the health mode state
+        _isHealthMode = !_isHealthMode;
       });
     } else {
       Navigator.push(
@@ -113,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _editHealthMode() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    bool newHealthMode = !_isHealthMode;  // Calculate the new mode state before navigation
+    bool newHealthMode = !_isHealthMode;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -121,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
         settings: RouteSettings(arguments: newHealthMode),
       ),
     ).then((returnedMode) {
-      // Use the returnedMode to update the state if it is not null
       if (returnedMode != null) {
         setState(() {
           _isHealthMode = returnedMode as bool;
@@ -130,11 +174,49 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _spinRoulette() {
+  void _spinRoulette() async {
     if (_foodItems.isEmpty) return;
-    final random = Random();
-    final randomIndex = random.nextInt(_foodItems.length); // 랜덤 인덱스 생성
-    final selectedItem = _foodItems[randomIndex]; //
+
+    String selectedItem;
+    List<String> filteredFoodItems = [];
+
+    if (_isHealthMode) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String carbohydratesLevel = prefs.getString('carbohydratesLevel') ?? '';
+      String proteinLevel = prefs.getString('proteinLevel') ?? '';
+      String fatsLevel = prefs.getString('fatsLevel') ?? '';
+      List<String> savedNutrients = prefs.getStringList('addedNutrients') ?? [];
+
+      for (String foodItem in _foodItems) {
+        Map<String, dynamic> nutrients = _cachedNutrients[foodItem] as Map<String, dynamic>;
+
+        bool matchesCarbohydrates = _matchesNutrientLevel(nutrients['carbohydrate'], carbohydratesLevel);
+        bool matchesProtein = _matchesNutrientLevel(nutrients['protein'], proteinLevel);
+        bool matchesFats = _matchesNutrientLevel(nutrients['fat'], fatsLevel);
+        bool containsSavedNutrients = savedNutrients.every((nutrient) => nutrients.containsKey(nutrient));
+
+        if (matchesCarbohydrates && matchesProtein && matchesFats && containsSavedNutrients) {
+          filteredFoodItems.add(foodItem);
+        }
+      }
+
+      if (filteredFoodItems.isNotEmpty) {
+        final random = Random();
+        final randomIndex = random.nextInt(filteredFoodItems.length);
+        selectedItem = filteredFoodItems[randomIndex];
+      } else {
+        // 조건에 맞는 음식이 없을 경우 전체 음식 중에서 랜덤 선택
+        final random = Random();
+        final randomIndex = random.nextInt(_foodItems.length);
+        selectedItem = _foodItems[randomIndex];
+      }
+    } else {
+      // HealthMode OFF: 전체 음식 중에서 랜덤 선택
+      final random = Random();
+      final randomIndex = random.nextInt(_foodItems.length);
+      selectedItem = _foodItems[randomIndex];
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
