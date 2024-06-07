@@ -274,10 +274,10 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
               RichText(
                 textAlign: TextAlign.center,
                 text: const TextSpan(
-                  style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
-                  children: <TextSpan>[
-                    TextSpan(text: '주변에 식당이 없어요!'),
-                  ]
+                    style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(text: '주변에 식당이 없어요!'),
+                    ]
                 ),
               )
                   :
@@ -517,16 +517,16 @@ class _NewPageState extends State<NewPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('지도'),
-          actions: [
-              IconButton(
-                icon: Icon(Icons.map),
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => NewPage(restaurants: widget.restaurants, position: widget.position)),
-                  );
-                },
-            ),],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.map),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => NewPage(restaurants: widget.restaurants, position: widget.position)),
+              );
+            },
+          ),],
       ),
       body: Center(
         child:
@@ -538,29 +538,29 @@ class _NewPageState extends State<NewPage> {
             for (int i = 0; i < widget.restaurants.length; i++) {
               markers.add(
                 Marker(
-                    markerId: i.toString(),
-                    latLng: LatLng(double.parse(widget.restaurants[i]['y']), double.parse(widget.restaurants[i]['x'])),
+                  markerId: i.toString(),
+                  latLng: LatLng(double.parse(widget.restaurants[i]['y']), double.parse(widget.restaurants[i]['x'])),
 
-                    //infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
-                    infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_self">식당 정보</a></div>',
-                    infoWindowRemovable: true,
-                    //infoWindowFirstShow: false,
+                  //infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_blank">식당 정보</a></div>',
+                  infoWindowContent: '<div style="padding:15px;">${widget.restaurants[i]['place_name']}<br><a href=${widget.restaurants[i]['place_url']} style="color:blue" target="_self">식당 정보</a></div>',
+                  infoWindowRemovable: true,
+                  //infoWindowFirstShow: false,
                 ),
               );
             }
             // 현재위치
             markers.add(
                 Marker(
-                    markerId: 'markerId',
-                    latLng: LatLng(widget.position.latitude, widget.position.longitude),
-                    width: 30,
-                    height: 40,
-                    offsetX: 15,
-                    offsetY: 44,
-                    markerImageSrc: 'https://w7.pngwing.com/pngs/398/162/png-transparent-computer-icons-google-map-maker-map-marker-angle-black-map-thumbnail.png',
-                    infoWindowContent: '<div style="padding:15px;">현재 위치</div>',
-                    infoWindowRemovable: true,
-                    infoWindowFirstShow: true,
+                  markerId: 'markerId',
+                  latLng: LatLng(widget.position.latitude, widget.position.longitude),
+                  width: 30,
+                  height: 40,
+                  offsetX: 15,
+                  offsetY: 44,
+                  markerImageSrc: 'https://w7.pngwing.com/pngs/398/162/png-transparent-computer-icons-google-map-maker-map-marker-angle-black-map-thumbnail.png',
+                  infoWindowContent: '<div style="padding:15px;">현재 위치</div>',
+                  infoWindowRemovable: true,
+                  infoWindowFirstShow: true,
                 )
             );
             setState(() { });
