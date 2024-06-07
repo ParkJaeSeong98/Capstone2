@@ -444,25 +444,8 @@ class _MenuRecommendationPageState extends State<MenuRecommendationPage> {
   }
 
   Future<Position> getCurrentLocation() async {  // 위치 정보 얻음
-    try {
-      // 위치 권한 확인
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        // 위치 권한을 요청
-        permission = await Geolocator.requestPermission();
-        if (permission != LocationPermission.whileInUse &&
-            permission != LocationPermission.always) {
-          return Future.error('Location permission not granted');
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.best);
-      return position;
-    } catch (e) {
-      return Future.error('Error getting current location: $e');
-    }
+    Position position = Position(longitude: 34.989414, latitude: 126.723767, timestamp: DateTime.now(), accuracy: 0.0, altitude: 0.0, altitudeAccuracy: 0.0, heading: 0.0, headingAccuracy: 0.0, speed: 0.0, speedAccuracy: 0.0)
+    return position;
   }
 
 }
