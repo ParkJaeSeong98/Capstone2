@@ -9,7 +9,8 @@ This project is made in 2024 1st semester Capstone Design(2) class.
 You can run in any android device.
 
 <div align="center">
-<img width="80%" src="https://github.com/ParkJaeSeong98/Capstone2/assets/48883899/56841c1a-edf0-4fcf-803e-54f5f97e7c1b">
+<img width="20%" src="https://github.com/ParkJaeSeong98/Literacy/assets/48883899/dfd8206b-8d2a-46f9-be71-d702e613d132">
+<img width="20%" src="https://github.com/ParkJaeSeong98/Capstone2/assets/48883899/56841c1a-edf0-4fcf-803e-54f5f97e7c1b">
 </div>
 
 ## 📖 Important Packages
